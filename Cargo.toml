@@ -1,0 +1,35 @@
+[package]
+
+name = "gfx_texture"
+version = "0.0.0"
+authors = [
+    "bvssvni <bvssvni@gmail.com>",
+    "Coeuvre <coeuvre@gmail.com>",
+    "gmorenz",
+    "leonkunert <info@leonkunert.de>",
+    "mitchmindtree <me@michellnordine.com>",
+    "Christiandh",
+    "Apointos",
+    "ccgn",
+    "reem",
+    "TyOverby <ty@pre-alpha.com>",
+    "eddyb"
+]
+
+[lib]
+
+name = "gfx_texture"
+path = "src/lib.rs"
+
+[dependencies.image]
+
+git = "https://github.com/PistonDevelopers/image"
+
+[dependencies.texture]
+
+git = "https://github.com/PistonDevelopers/texture"
+
+[dependencies.gfx]
+
+git = "https://github.com/gfx-rs/gfx-rs"
+
