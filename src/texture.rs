@@ -75,6 +75,29 @@ impl Texture {
         }
     }
 
+    /// Creates a texture from RGBA image.
+    pub fn from_rgba8<D: gfx::Device<C>, C: gfx::CommandBuffer>(
+        img: ImageBuf<Rgba<u8>>,
+        d: &mut D
+    ) -> Texture {
+        let (width, height) = img.dimensions();
+
+        let mut ti = gfx::tex::TextureInfo::new();
+        ti.width = width as u16;
+        ti.height = height as u16;
+        ti.kind = gfx::tex::Texture2D;
+        ti.format = gfx::tex::RGBA8;
+
+        let tex = d.create_texture(ti).unwrap();
+        d.update_texture(&tex, &ti.to_image_info(),
+                         img.into_vec().as_slice()).unwrap();
+        d.generate_mipmap(&tex);
+
+        Texture {
+            handle: tex,
+        }
+    }
+
     /// Updates the texture with an image.
     pub fn update<
         C: gfx::CommandBuffer,
