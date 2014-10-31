@@ -5,7 +5,7 @@ use image::{
     ImageBuf,
     Rgba,
 };
-use texture_lib::ImageSize;
+use texture_lib::{ FromMemoryAlpha, ImageSize };
 
 /// Represents a texture.
 pub struct Texture {
@@ -138,3 +138,42 @@ impl ImageSize for Texture {
         (info.width as u32, info.height as u32)
     }
 }
+
+impl<D: gfx::Device<C>, C: gfx::CommandBuffer> FromMemoryAlpha<D> 
+for Texture {
+    fn from_memory_alpha(
+        device: &mut D,
+        buffer: &[u8],
+        width: u32,
+        height: u32,
+        f: |&mut D, Texture| -> Texture
+    ) -> Option<Texture> {
+        
+        let mut pixels = Vec::new();
+        for alpha in buffer.iter() {
+            pixels.push(255);
+            pixels.push(255);
+            pixels.push(255);
+            pixels.push(*alpha);
+        }
+
+        let texture_info = gfx::tex::TextureInfo {
+            width: width as u16,
+            height: height as u16,
+            depth: 1,
+            levels: 1,
+            kind: gfx::tex::Texture2D,
+            format: gfx::tex::RGBA8,
+        };
+
+        let image_info = texture_info.to_image_info();
+        let texture = device.create_texture(texture_info).unwrap();
+        device.update_texture(&texture, &image_info,
+            pixels.as_slice())
+            .unwrap();
+        Some(f(device, Texture {
+            handle: texture
+        }))
+    }
+}
+
