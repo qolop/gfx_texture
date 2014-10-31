@@ -108,9 +108,31 @@ impl Texture {
             image.pixelbuf().as_slice()
         ).unwrap();
     }
+
+    /// Gets the size of the texture.
+    #[inline(always)]
+    pub fn get_size(&self) -> (u32, u32) {
+        let info = self.handle.get_info();
+        (info.width as u32, info.height as u32)
+    }
+
+    /// Gets the width of the texture.
+    #[inline(always)]
+    pub fn get_width(&self) -> u32 {
+        let (w, _) = self.get_size();
+        w
+    }
+
+    /// Gets the height of the texture.
+    #[inline(always)]
+    pub fn get_height(&self) -> u32 {
+        let (_, h) = self.get_size();
+        h
+    }
 }
 
 impl ImageSize for Texture {
+    #[inline(always)]
     fn get_size(&self) -> (u32, u32) {
         let info = self.handle.get_info();
         (info.width as u32, info.height as u32)
