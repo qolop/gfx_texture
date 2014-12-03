@@ -37,7 +37,7 @@ impl Texture {
             height: height as u16,
             depth: 1,
             levels: 1,
-            kind: gfx::tex::Texture2D,
+            kind: gfx::tex::TextureKind::Texture2D,
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
@@ -62,7 +62,7 @@ impl Texture {
             height: height as u16,
             depth: 1,
             levels: 1,
-            kind: gfx::tex::Texture2D,
+            kind: gfx::tex::TextureKind::Texture2D,
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
@@ -86,7 +86,7 @@ impl Texture {
         let mut ti = gfx::tex::TextureInfo::new();
         ti.width = width as u16;
         ti.height = height as u16;
-        ti.kind = gfx::tex::Texture2D;
+        ti.kind = gfx::tex::TextureKind::Texture2D;
         ti.format = gfx::tex::RGBA8;
 
         let tex = d.create_texture(ti).unwrap();
@@ -127,7 +127,7 @@ impl Texture {
             height: height as u16,
             depth: 1,
             levels: 1,
-            kind: gfx::tex::Texture2D,
+            kind: gfx::tex::TextureKind::Texture2D,
             format: gfx::tex::RGBA8,
         };
 
