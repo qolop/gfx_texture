@@ -3,8 +3,7 @@ use image;
 use image::{
     DynamicImage,
     GenericImage,
-    ImageBuf,
-    Rgba,
+    RgbaImage,
 };
 use texture_lib::ImageSize;
 
@@ -43,7 +42,7 @@ impl Texture {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).unwrap();
         device.update_texture(&texture, &image_info,
-            img.rawbuf().as_slice())
+            img.as_slice())
         .unwrap();
 
         Ok(Texture {
@@ -55,7 +54,7 @@ impl Texture {
     pub fn from_image<
         C: gfx::CommandBuffer,
         D: gfx::Device<C>
-    >(device: &mut D, image: &ImageBuf<Rgba<u8>>) -> Texture {
+    >(device: &mut D, image: &RgbaImage) -> Texture {
         let (width, height) = image.dimensions();
         let texture_info = gfx::tex::TextureInfo {
             width: width as u16,
@@ -68,7 +67,7 @@ impl Texture {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).unwrap();
         device.update_texture(&texture, &image_info,
-            image.pixelbuf().as_slice())
+            image.as_slice())
         .unwrap();
 
         Texture {
@@ -78,7 +77,7 @@ impl Texture {
 
     /// Creates a texture from RGBA image.
     pub fn from_rgba8<D: gfx::Device<C>, C: gfx::CommandBuffer>(
-        img: ImageBuf<Rgba<u8>>,
+        img: RgbaImage,
         d: &mut D
     ) -> Texture {
         let (width, height) = img.dimensions();
@@ -145,10 +144,10 @@ impl Texture {
     pub fn update<
         C: gfx::CommandBuffer,
         D: gfx::Device<C>
-    >(&mut self, device: &mut D, image: &ImageBuf<Rgba<u8>>) {
+    >(&mut self, device: &mut D, image: &RgbaImage) {
         device.update_texture(&self.handle, 
             &self.handle.get_info().to_image_info(),
-            image.pixelbuf().as_slice()
+            image.as_slice()
         ).unwrap();
     }
 
