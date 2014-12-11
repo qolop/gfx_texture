@@ -25,7 +25,7 @@ path = "src/lib.rs"
 
 git = "https://github.com/PistonDevelopers/image"
 
-[dependencies.texture]
+[dependencies.piston-texture]
 
 git = "https://github.com/PistonDevelopers/texture"
 
