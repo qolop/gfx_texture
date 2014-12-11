@@ -1,6 +1,6 @@
 [package]
 
-name = "gfx_texture"
+name = "piston-gfx_texture"
 version = "0.0.0"
 authors = [
     "bvssvni <bvssvni@gmail.com>",
@@ -15,6 +15,12 @@ authors = [
     "TyOverby <ty@pre-alpha.com>",
     "eddyb"
 ]
+tags = ["texture", "gfx", "2d", "3d", "graphics", "piston"]
+description = "A Gfx texture representation that works nicely with Piston libraries"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/pistondevelopers/gfx_texture.git"
+homepage = "https://github.com/pistondevelopers/gfx_texture"
 
 [lib]
 
