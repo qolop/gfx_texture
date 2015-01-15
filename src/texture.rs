@@ -21,7 +21,7 @@ impl Texture {
     >(device: &mut D, path: &Path) -> Result<Texture, String> {
         let img = match image::open(path) {
             Ok(img) => img,
-            Err(e)  => return Err(format!("Could not load '{}': {}",
+            Err(e)  => return Err(format!("Could not load '{:?}': {:?}",
                 path.filename_str().unwrap(), e)),
         };
 
