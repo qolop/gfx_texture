@@ -1,7 +1,7 @@
 [package]
 
 name = "piston-gfx_texture"
-version = "0.0.0"
+version = "0.0.1"
 authors = [
     "bvssvni <bvssvni@gmail.com>",
     "Coeuvre <coeuvre@gmail.com>",
@@ -15,7 +15,7 @@ authors = [
     "TyOverby <ty@pre-alpha.com>",
     "eddyb"
 ]
-tags = ["texture", "gfx", "2d", "3d", "graphics", "piston"]
+keywords = ["texture", "gfx", "graphics", "piston"]
 description = "A Gfx texture representation that works nicely with Piston libraries"
 license = "MIT"
 readme = "README.md"
@@ -28,14 +28,13 @@ name = "gfx_texture"
 path = "src/lib.rs"
 
 [dependencies.image]
-
 git = "https://github.com/PistonDevelopers/image"
+#version = "0.0.0"
 
 [dependencies.piston-texture]
-
 git = "https://github.com/PistonDevelopers/texture"
+#version = "0.0.0"
 
 [dependencies.gfx]
-
 git = "https://github.com/gfx-rs/gfx-rs"
-
+#version = "0.0.0"
