@@ -29,12 +29,13 @@ path = "src/lib.rs"
 
 [dependencies.image]
 git = "https://github.com/PistonDevelopers/image"
-#version = "0.0.0"
+#version = "~0.2.0"
 
 [dependencies.piston-texture]
 git = "https://github.com/PistonDevelopers/texture"
-#version = "0.0.0"
+#version = "0.0.1"
 
 [dependencies.gfx]
 git = "https://github.com/gfx-rs/gfx-rs"
-#version = "0.0.0"
+#version = "0.1.0"
+
