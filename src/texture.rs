@@ -8,6 +8,7 @@ use image::{
 use texture_lib::ImageSize;
 
 /// Represents a texture.
+#[derive(Copy)]
 pub struct Texture {
     /// A handle to the Gfx texture.
     pub handle: gfx::TextureHandle,
@@ -90,7 +91,7 @@ impl Texture {
 
         let tex = d.create_texture(ti).ok().unwrap();
         d.update_texture(&tex, &ti.to_image_info(),
-                         img.into_vec().as_slice()).ok().unwrap();
+                         &img.into_vec()[]).ok().unwrap();
         d.generate_mipmap(&tex);
 
         Texture {
@@ -130,7 +131,7 @@ impl Texture {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).ok().unwrap();
         device.update_texture(&texture, &image_info,
-            pixels.as_slice())
+            &pixels[])
             .ok().unwrap();
         Texture {
             handle: texture
