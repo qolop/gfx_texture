@@ -91,7 +91,7 @@ impl Texture {
 
         let tex = d.create_texture(ti).ok().unwrap();
         d.update_texture(&tex, &ti.to_image_info(),
-                         &img.into_vec()[]).ok().unwrap();
+                         &img.into_raw()[]).ok().unwrap();
         d.generate_mipmap(&tex);
 
         Texture {
