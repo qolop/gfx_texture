@@ -11,7 +11,7 @@ use texture_lib::ImageSize;
 #[derive(Copy)]
 pub struct Texture {
     /// A handle to the Gfx texture.
-    pub handle: gfx::TextureHandle,
+    pub handle: gfx::TextureHandle<gfx::GlResources>,
 }
 
 impl Texture {
