@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![feature(path)]
+#![feature(old_path)]
 
 //! A Gfx texture representation that works nicely with Piston libraries.
 

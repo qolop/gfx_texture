@@ -91,7 +91,7 @@ impl Texture {
 
         let tex = d.create_texture(ti).ok().unwrap();
         d.update_texture(&tex, &ti.to_image_info(),
-                         &img.into_raw()[]).ok().unwrap();
+                         &img.into_raw()).ok().unwrap();
         d.generate_mipmap(&tex);
 
         Texture {
@@ -131,7 +131,7 @@ impl Texture {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).ok().unwrap();
         device.update_texture(&texture, &image_info,
-            &pixels[])
+            &pixels)
             .ok().unwrap();
         Texture {
             handle: texture
