@@ -76,27 +76,15 @@ impl Texture {
         }
     }
 
-    /// Creates a texture from RGBA image.
-    pub fn from_rgba8<D: gfx::Device>(
-        img: RgbaImage,
-        d: &mut D
+    /// Creates a texture from image and generates mipmap.
+    pub fn from_image_with_mipmap<D: gfx::Device>(
+        device: &mut D,
+        image: &RgbaImage
     ) -> Texture {
-        let (width, height) = img.dimensions();
+        let texture = Texture::from_image(device, image);
+        device.generate_mipmap(&texture.handle);
 
-        let mut ti = gfx::tex::TextureInfo::new();
-        ti.width = width as u16;
-        ti.height = height as u16;
-        ti.kind = gfx::tex::TextureKind::Texture2D;
-        ti.format = gfx::tex::RGBA8;
-
-        let tex = d.create_texture(ti).ok().unwrap();
-        d.update_texture(&tex, &ti.to_image_info(),
-                         &img.into_raw()[]).ok().unwrap();
-        d.generate_mipmap(&tex);
-
-        Texture {
-            handle: tex,
-        }
+        texture
     }
 
     /// Creates texture from memory alpha.
@@ -131,7 +119,7 @@ impl Texture {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).ok().unwrap();
         device.update_texture(&texture, &image_info,
-            &pixels[])
+            &pixels)
             .ok().unwrap();
         Texture {
             handle: texture
@@ -144,27 +132,6 @@ impl Texture {
             &self.handle.get_info().to_image_info(),
             image.as_slice()
         ).ok().unwrap();
-    }
-
-    /// Gets the size of the texture.
-    #[inline(always)]
-    pub fn get_size(&self) -> (u32, u32) {
-        let info = self.handle.get_info();
-        (info.width as u32, info.height as u32)
-    }
-
-    /// Gets the width of the texture.
-    #[inline(always)]
-    pub fn get_width(&self) -> u32 {
-        let (w, _) = self.get_size();
-        w
-    }
-
-    /// Gets the height of the texture.
-    #[inline(always)]
-    pub fn get_height(&self) -> u32 {
-        let (_, h) = self.get_size();
-        h
     }
 }
 
