@@ -78,8 +78,8 @@ impl Texture {
 
     /// Creates a texture from RGBA image.
     pub fn from_rgba8<D: gfx::Device>(
-        img: RgbaImage,
-        d: &mut D
+        device: &mut D,
+        image: &RgbaImage
     ) -> Texture {
         let (width, height) = img.dimensions();
 
