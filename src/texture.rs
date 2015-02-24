@@ -9,17 +9,17 @@ use texture_lib::ImageSize;
 
 /// Represents a texture.
 #[derive(Copy)]
-pub struct Texture {
+pub struct Texture<D: gfx::Device> {
     /// A handle to the Gfx texture.
-    pub handle: gfx::TextureHandle<gfx::GlResources>,
+    pub handle: gfx::TextureHandle<D::Resources>,
 }
 
-impl Texture {
+impl<D: gfx::Device> Texture<D> {
     /// Creates a texture from path.
-    pub fn from_path<D: gfx::Device>(
+    pub fn from_path(
         device: &mut D,
         path: &Path
-    ) -> Result<Texture, String> {
+    ) -> Result<Texture<D>, String> {
         let img = match image::open(path) {
             Ok(img) => img,
             Err(e)  => return Err(format!("Could not load '{:?}': {:?}",
@@ -52,10 +52,10 @@ impl Texture {
     }
 
     /// Creates a texture from image.
-    pub fn from_image<D: gfx::Device>(
+    pub fn from_image(
         device: &mut D,
         image: &RgbaImage
-    ) -> Texture {
+    ) -> Texture<D> {
         let (width, height) = image.dimensions();
         let texture_info = gfx::tex::TextureInfo {
             width: width as u16,
@@ -77,10 +77,10 @@ impl Texture {
     }
 
     /// Creates a texture from image and generates mipmap.
-    pub fn from_image_with_mipmap<D: gfx::Device>(
+    pub fn from_image_with_mipmap(
         device: &mut D,
         image: &RgbaImage
-    ) -> Texture {
+    ) -> Texture<D> {
         let texture = Texture::from_image(device, image);
         device.generate_mipmap(&texture.handle);
 
@@ -88,12 +88,12 @@ impl Texture {
     }
 
     /// Creates texture from memory alpha.
-    pub fn from_memory_alpha<D: gfx::Device>(
+    pub fn from_memory_alpha(
         device: &mut D,
         buffer: &[u8],
         width: u32,
         height: u32,
-    ) -> Texture {
+    ) -> Texture<D> {
         use std::cmp::max;
 
         let width = max(width, 1);
@@ -127,7 +127,7 @@ impl Texture {
     }
 
     /// Updates the texture with an image.
-    pub fn update<D: gfx::Device>(&mut self, device: &mut D, image: &RgbaImage) {
+    pub fn update(&mut self, device: &mut D, image: &RgbaImage) {
         device.update_texture(&self.handle,
             &self.handle.get_info().to_image_info(),
             image.as_slice()
@@ -135,7 +135,7 @@ impl Texture {
     }
 }
 
-impl ImageSize for Texture {
+impl<D: gfx::Device> ImageSize for Texture<D> {
     #[inline(always)]
     fn get_size(&self) -> (u32, u32) {
         let info = self.handle.get_info();
