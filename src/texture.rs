@@ -1,3 +1,5 @@
+use std::old_path::*;
+
 use gfx;
 use image;
 use image::{
