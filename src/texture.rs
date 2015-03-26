@@ -1,4 +1,4 @@
-use std::old_path::*;
+use std::path::Path;
 
 use gfx;
 use image;
@@ -24,7 +24,7 @@ impl<R: gfx::Resources> Texture<R> {
         let img = match image::open(path) {
             Ok(img) => img,
             Err(e)  => return Err(format!("Could not load '{:?}': {:?}",
-                path.filename_str().unwrap(), e)),
+                path.file_name().unwrap(), e)),
         };
 
         let img = match img {
@@ -44,7 +44,7 @@ impl<R: gfx::Resources> Texture<R> {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).ok().unwrap();
         device.update_texture(&texture, &image_info,
-            img.as_slice())
+            img.as_ref())
         .ok().unwrap();
 
         Ok(Texture {
@@ -69,7 +69,7 @@ impl<R: gfx::Resources> Texture<R> {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).ok().unwrap();
         device.update_texture(&texture, &image_info,
-            image.as_slice())
+            image.as_ref())
         .ok().unwrap();
 
         Texture {
@@ -131,7 +131,7 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn update<D: gfx::Factory<R>>(&mut self, device: &mut D, image: &RgbaImage) {
         device.update_texture(&self.handle,
             &self.handle.get_info().to_image_info(),
-            image.as_slice()
+            image.as_ref()
         ).ok().unwrap();
     }
 }
