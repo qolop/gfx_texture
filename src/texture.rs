@@ -10,6 +10,7 @@ use image::{
 use texture_lib::ImageSize;
 
 /// Represents a texture.
+#[derive(Clone, Debug)]
 pub struct Texture<R: gfx::Resources> {
     /// A handle to the Gfx texture.
     pub handle: gfx::TextureHandle<R>,
