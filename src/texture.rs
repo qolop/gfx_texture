@@ -37,7 +37,7 @@ impl<R: gfx::Resources> Texture<R> {
 
         let img = if settings.flip_vertical {
             image::imageops::flip_vertical(&img)
-        }else {
+        } else {
             img
         };
 
@@ -65,9 +65,8 @@ impl<R: gfx::Resources> Texture<R> {
         };
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).unwrap();
-        device.update_texture(&texture, &image_info, image.as_ref())
-              .unwrap();
-
+        device.update_texture(&texture, &image_info, &image,
+                              Some(gfx::tex::TextureKind::Texture2D)).unwrap();
         Texture {
             handle: texture
         }
@@ -104,8 +103,8 @@ impl<R: gfx::Resources> Texture<R> {
 
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).unwrap();
-        device.update_texture(&texture, &image_info, &pixels)
-              .unwrap();
+        device.update_texture(&texture, &image_info, &pixels,
+                              Some(gfx::tex::TextureKind::Texture2D)).unwrap();
         Texture {
             handle: texture
         }
@@ -115,7 +114,8 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn update<D: gfx::Factory<R>>(&mut self, device: &mut D, image: &RgbaImage) {
         device.update_texture(&self.handle,
             &self.handle.get_info().to_image_info(),
-            image.as_ref()
+            &image,
+            Some(gfx::tex::TextureKind::Texture2D)
         ).unwrap();
     }
 }
