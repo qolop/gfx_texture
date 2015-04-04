@@ -1,5 +1,4 @@
 #![deny(missing_docs)]
-#![feature(convert)]
 
 //! A Gfx texture representation that works nicely with Piston libraries.
 
