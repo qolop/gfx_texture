@@ -41,18 +41,18 @@ impl<R: gfx::Resources> Texture<R> {
             img
         };
 
-        let texture = Texture::from_image(device, &img);
-
-        if settings.generate_mipmap {
-            device.generate_mipmap(&texture.handle);
-        }
+        let texture = Texture::from_image(device, &img,
+                                          settings.compress,
+                                          settings.generate_mipmap);
         Ok(texture)
     }
 
     /// Creates a texture from image.
     pub fn from_image<D: gfx::Factory<R>>(
         device: &mut D,
-        image: &RgbaImage
+        image: &RgbaImage,
+        _compress: bool,
+        generate_mipmap: bool
     ) -> Self {
         let (width, height) = image.dimensions();
         let texture_info = gfx::tex::TextureInfo {
@@ -67,6 +67,9 @@ impl<R: gfx::Resources> Texture<R> {
         let texture = device.create_texture(texture_info).unwrap();
         device.update_texture(&texture, &image_info, &image,
                               Some(gfx::tex::TextureKind::Texture2D)).unwrap();
+        if generate_mipmap {
+            device.generate_mipmap(&texture);
+        }
         Texture {
             handle: texture
         }
