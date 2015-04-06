@@ -29,6 +29,7 @@ path = "src/lib.rs"
 
 [dependencies.image]
 git = "https://github.com/PistonDevelopers/image"
+default-features = false
 #version = "~0.2.0"
 
 [dependencies.piston-texture]
