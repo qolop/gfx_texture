@@ -1,13 +1,11 @@
 use std::path::Path;
-
-use gfx;
-use image;
+use { gfx, ImageSize, Settings };
 use image::{
+    self,
     DynamicImage,
     GenericImage,
     RgbaImage,
 };
-use texture_lib::ImageSize;
 
 /// Represents a texture.
 #[derive(Clone, Debug)]
@@ -18,16 +16,15 @@ pub struct Texture<R: gfx::Resources> {
 
 impl<R: gfx::Resources> Texture<R> {
     /// Creates a texture from path.
-    pub fn from_path<D: gfx::Factory<R>>(
-        device: &mut D,
-        path: &Path,
-        settings: &::Settings,
-    ) -> Result<Self, String> {
-        let img = match image::open(path) {
-            Ok(img) => img,
-            Err(e)  => return Err(format!("Could not load '{:?}': {:?}",
-                path.file_name().unwrap(), e)),
-        };
+    pub fn from_path<F, P>(
+        factory: &mut F,
+        path: P,
+        settings: &Settings,
+    ) -> Result<Self, String>
+        where F: gfx::Factory<R>,
+              P: AsRef<Path>
+    {
+        let img = try!(image::open(path).map_err(|e| e.to_string()));
 
         //if settings.force_alpha //TODO
         let img = match img {
@@ -41,15 +38,15 @@ impl<R: gfx::Resources> Texture<R> {
             img
         };
 
-        let texture = Texture::from_image(device, &img,
+        let texture = Texture::from_image(factory, &img,
                                           settings.compress,
                                           settings.generate_mipmap);
         Ok(texture)
     }
 
     /// Creates a texture from image.
-    pub fn from_image<D: gfx::Factory<R>>(
-        device: &mut D,
+    pub fn from_image<F: gfx::Factory<R>>(
+        factory: &mut F,
         image: &RgbaImage,
         _compress: bool,
         generate_mipmap: bool
@@ -64,11 +61,11 @@ impl<R: gfx::Resources> Texture<R> {
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
-        let texture = device.create_texture(texture_info).unwrap();
-        device.update_texture(&texture, &image_info, &image,
-                              Some(gfx::tex::TextureKind::Texture2D)).unwrap();
+        let texture = factory.create_texture(texture_info).unwrap();
+        factory.update_texture(&texture, &image_info, &image,
+                               Some(gfx::tex::TextureKind::Texture2D)).unwrap();
         if generate_mipmap {
-            device.generate_mipmap(&texture);
+            factory.generate_mipmap(&texture);
         }
         Texture {
             handle: texture
@@ -76,8 +73,8 @@ impl<R: gfx::Resources> Texture<R> {
     }
 
     /// Creates texture from memory alpha.
-    pub fn from_memory_alpha<D: gfx::Factory<R>>(
-        device: &mut D,
+    pub fn from_memory_alpha<F: gfx::Factory<R>>(
+        factory: &mut F,
         buffer: &[u8],
         width: u32,
         height: u32,
@@ -105,17 +102,17 @@ impl<R: gfx::Resources> Texture<R> {
         };
 
         let image_info = texture_info.to_image_info();
-        let texture = device.create_texture(texture_info).unwrap();
-        device.update_texture(&texture, &image_info, &pixels,
-                              Some(gfx::tex::TextureKind::Texture2D)).unwrap();
+        let texture = factory.create_texture(texture_info).unwrap();
+        factory.update_texture(&texture, &image_info, &pixels,
+                               Some(gfx::tex::TextureKind::Texture2D)).unwrap();
         Texture {
             handle: texture
         }
     }
 
     /// Updates the texture with an image.
-    pub fn update<D: gfx::Factory<R>>(&mut self, device: &mut D, image: &RgbaImage) {
-        device.update_texture(&self.handle,
+    pub fn update<F: gfx::Factory<R>>(&mut self, factory: &mut F, image: &RgbaImage) {
+        factory.update_texture(&self.handle,
             &self.handle.get_info().to_image_info(),
             &image,
             Some(gfx::tex::TextureKind::Texture2D)
