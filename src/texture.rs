@@ -39,6 +39,7 @@ impl<R: gfx::Resources> Texture<R> {
         };
 
         let texture = Texture::from_image(factory, &img,
+                                          settings.convert_gamma,
                                           settings.compress,
                                           settings.generate_mipmap);
         Ok(texture)
@@ -48,6 +49,7 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn from_image<F: gfx::Factory<R>>(
         factory: &mut F,
         image: &RgbaImage,
+        convert_gamma: bool,
         _compress: bool,
         generate_mipmap: bool
     ) -> Self {
@@ -58,7 +60,9 @@ impl<R: gfx::Resources> Texture<R> {
             depth: 1,
             levels: 1,
             kind: gfx::tex::TextureKind::Texture2D,
-            format: gfx::tex::RGBA8,
+            format: if convert_gamma {
+                gfx::tex::Format::SRGB8_A8
+            }else { gfx::tex::RGBA8 },
         };
         let image_info = texture_info.to_image_info();
         let texture = factory.create_texture(texture_info).unwrap();
