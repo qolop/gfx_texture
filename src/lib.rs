@@ -17,6 +17,8 @@ pub struct Settings {
     pub force_alpha: bool,
     /// Sometimes you need the other way around.
     pub flip_vertical: bool,
+    /// Treat as sRGB space.
+    pub convert_gamma: bool,
     /// Compress on GPU.
     pub compress: bool,
     /// Generate mipmap chain.
@@ -29,6 +31,7 @@ impl Settings {
         Settings {
             force_alpha: false,
             flip_vertical: false,
+            convert_gamma: false,
             compress: false,
             generate_mipmap: false,
         }
