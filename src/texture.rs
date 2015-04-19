@@ -86,14 +86,7 @@ impl<R: gfx::Resources> Texture<R> {
                 gfx::tex::Format::SRGB8_A8
             } else { gfx::tex::RGBA8 }
         };
-        let ref image_info = tex_info.to_image_info();
-        let tex_handle = factory.create_texture(tex_info).unwrap();
-        factory.update_texture(
-            &tex_handle,
-            image_info,
-            &image,
-            Some(gfx::tex::TextureKind::Texture2D)
-        ).unwrap();
+        let tex_handle = factory.create_texture_static(tex_info, &image).unwrap();
         if generate_mipmap {
             factory.generate_mipmap(&tex_handle);
         }
