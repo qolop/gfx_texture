@@ -8,13 +8,17 @@ use image::{
 };
 
 /// Represents a texture.
-#[derive(Clone, Debug)]
-pub struct Texture<R: gfx::Resources> {
-    /// A handle to the Gfx texture.
-    pub handle: gfx::TextureHandle<R>,
+#[derive(Clone, Debug, PartialEq)]
+pub struct Texture<R> where R: gfx::Resources {
+    handle: gfx::TextureHandle<R>
 }
 
 impl<R: gfx::Resources> Texture<R> {
+    /// Get a handle to the Gfx texture.
+    pub fn handle(&self) -> gfx::TextureHandle<R> {
+        self.handle.clone()
+    }
+
     /// Creates a texture from path.
     pub fn from_path<F, P>(
         factory: &mut F,
@@ -46,13 +50,15 @@ impl<R: gfx::Resources> Texture<R> {
     }
 
     /// Creates a texture from image.
-    pub fn from_image<F: gfx::Factory<R>>(
+    pub fn from_image<F>(
         factory: &mut F,
         image: &RgbaImage,
         convert_gamma: bool,
         _compress: bool,
         generate_mipmap: bool
-    ) -> Self {
+    ) -> Self
+        where F: gfx::Factory<R>
+    {
         let (width, height) = image.dimensions();
         let texture_info = gfx::tex::TextureInfo {
             width: width as u16,
@@ -62,7 +68,7 @@ impl<R: gfx::Resources> Texture<R> {
             kind: gfx::tex::TextureKind::Texture2D,
             format: if convert_gamma {
                 gfx::tex::Format::SRGB8_A8
-            }else { gfx::tex::RGBA8 },
+            } else { gfx::tex::RGBA8 }
         };
         let image_info = texture_info.to_image_info();
         let texture = factory.create_texture(texture_info).unwrap();
@@ -77,22 +83,20 @@ impl<R: gfx::Resources> Texture<R> {
     }
 
     /// Creates texture from memory alpha.
-    pub fn from_memory_alpha<F: gfx::Factory<R>>(
+    pub fn from_memory_alpha<F>(
         factory: &mut F,
         buffer: &[u8],
         width: u32,
         height: u32,
-    ) -> Self {
-        use std::cmp::max;
+    ) -> Self
+        where F: gfx::Factory<R>
+    {
+        let width = if width == 0 { 1 } else { width };
+        let height = if height == 0 { 1 } else { height };
 
-        let width = max(width, 1);
-        let height = max(height, 1);
-
-        let mut pixels = Vec::new();
-        for alpha in buffer.iter() {
-            pixels.push(255);
-            pixels.push(255);
-            pixels.push(255);
+        let mut pixels = vec![];
+        for alpha in buffer {
+            pixels.extend(vec![255; 3]);
             pixels.push(*alpha);
         }
 
@@ -115,7 +119,9 @@ impl<R: gfx::Resources> Texture<R> {
     }
 
     /// Updates the texture with an image.
-    pub fn update<F: gfx::Factory<R>>(&mut self, factory: &mut F, image: &RgbaImage) {
+    pub fn update<F>(&mut self, factory: &mut F, image: &RgbaImage)
+        where F: gfx::Factory<R>
+    {
         factory.update_texture(&self.handle,
             &self.handle.get_info().to_image_info(),
             &image,
@@ -124,7 +130,7 @@ impl<R: gfx::Resources> Texture<R> {
     }
 }
 
-impl<R: gfx::Resources> ImageSize for Texture<R> {
+impl<R> ImageSize for Texture<R> where R: gfx::Resources {
     #[inline(always)]
     fn get_size(&self) -> (u32, u32) {
         let info = self.handle.get_info();
