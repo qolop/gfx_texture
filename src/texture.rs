@@ -14,9 +14,34 @@ pub struct Texture<R> where R: gfx::Resources {
 }
 
 impl<R: gfx::Resources> Texture<R> {
-    /// Get a handle to the Gfx texture.
+    /// Gets a handle to the Gfx texture.
     pub fn handle(&self) -> gfx::TextureHandle<R> {
         self.handle.clone()
+    }
+
+    /// Returns empty texture.
+    pub fn empty<F>(factory: &mut F) -> Result<Self, gfx::tex::TextureError>
+        where F: gfx::Factory<R>
+    {
+        let tex_info = gfx::tex::TextureInfo {
+            width: 1,
+            height: 1,
+            depth: 1,
+            levels: 1,
+            format: gfx::tex::RGBA8,
+            kind: gfx::tex::TextureKind::Texture2D
+        };
+        let ref image_info = tex_info.to_image_info();
+        let tex_handle = try!(factory.create_texture(tex_info));
+        try!(factory.update_texture(
+            &tex_handle,
+            image_info,
+            &[0u8; 4],
+            Some(gfx::tex::TextureKind::Texture2D)
+        ));
+        Ok(Texture {
+            handle: tex_handle
+        })
     }
 
     /// Creates a texture from path.
