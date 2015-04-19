@@ -23,16 +23,10 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn empty<F>(factory: &mut F) -> Result<Self, gfx::tex::TextureError>
         where F: gfx::Factory<R>
     {
-        let tex_info = gfx::tex::TextureInfo {
-            width: 1,
-            height: 1,
-            depth: 1,
-            levels: 1,
-            format: gfx::tex::RGBA8,
-            kind: gfx::tex::TextureKind::Texture2D
-        };
-        let ref image_info = tex_info.to_image_info();
-        let tex_handle = try!(factory.create_texture(tex_info));
+        use gfx::traits::*;
+
+        let tex_handle = try!(factory.create_texture_rgba8(1, 1));
+        let ref image_info = tex_handle.get_info().to_image_info();
         try!(factory.update_texture(
             &tex_handle,
             image_info,
@@ -56,22 +50,19 @@ impl<R: gfx::Resources> Texture<R> {
         let img = try!(image::open(path).map_err(|e| e.to_string()));
 
         //if settings.force_alpha //TODO
-        let img = match img {
+        let mut img = match img {
             DynamicImage::ImageRgba8(img) => img,
-            img => img.to_rgba(),
+            img => img.to_rgba()
         };
 
-        let img = if settings.flip_vertical {
-            image::imageops::flip_vertical(&img)
-        } else {
-            img
-        };
+        if settings.flip_vertical {
+            img = image::imageops::flip_vertical(&img);
+        }
 
-        let texture = Texture::from_image(factory, &img,
-                                          settings.convert_gamma,
-                                          settings.compress,
-                                          settings.generate_mipmap);
-        Ok(texture)
+        Ok(Texture::from_image(factory, &img,
+                               settings.convert_gamma,
+                               settings.compress,
+                               settings.generate_mipmap))
     }
 
     /// Creates a texture from image.
@@ -85,7 +76,7 @@ impl<R: gfx::Resources> Texture<R> {
         where F: gfx::Factory<R>
     {
         let (width, height) = image.dimensions();
-        let texture_info = gfx::tex::TextureInfo {
+        let tex_info = gfx::tex::TextureInfo {
             width: width as u16,
             height: height as u16,
             depth: 1,
@@ -95,15 +86,19 @@ impl<R: gfx::Resources> Texture<R> {
                 gfx::tex::Format::SRGB8_A8
             } else { gfx::tex::RGBA8 }
         };
-        let image_info = texture_info.to_image_info();
-        let texture = factory.create_texture(texture_info).unwrap();
-        factory.update_texture(&texture, &image_info, &image,
-                               Some(gfx::tex::TextureKind::Texture2D)).unwrap();
+        let ref image_info = tex_info.to_image_info();
+        let tex_handle = factory.create_texture(tex_info).unwrap();
+        factory.update_texture(
+            &tex_handle,
+            image_info,
+            &image,
+            Some(gfx::tex::TextureKind::Texture2D)
+        ).unwrap();
         if generate_mipmap {
-            factory.generate_mipmap(&texture);
+            factory.generate_mipmap(&tex_handle);
         }
         Texture {
-            handle: texture
+            handle: tex_handle
         }
     }
 
@@ -116,8 +111,10 @@ impl<R: gfx::Resources> Texture<R> {
     ) -> Self
         where F: gfx::Factory<R>
     {
-        let width = if width == 0 { 1 } else { width };
-        let height = if height == 0 { 1 } else { height };
+        use gfx::traits::*;
+
+        let width = if width == 0 { 1 } else { width as u16 };
+        let height = if height == 0 { 1 } else { height as u16 };
 
         let mut pixels = vec![];
         for alpha in buffer {
@@ -125,21 +122,17 @@ impl<R: gfx::Resources> Texture<R> {
             pixels.push(*alpha);
         }
 
-        let texture_info = gfx::tex::TextureInfo {
-            width: width as u16,
-            height: height as u16,
-            depth: 1,
-            levels: 1,
-            kind: gfx::tex::TextureKind::Texture2D,
-            format: gfx::tex::RGBA8,
-        };
+        let tex_handle = factory.create_texture_rgba8(width, height).unwrap();
+        let ref image_info = tex_handle.get_info().to_image_info();
+        factory.update_texture(
+            &tex_handle,
+            image_info,
+            &pixels,
+            Some(gfx::tex::TextureKind::Texture2D)
+        ).unwrap();
 
-        let image_info = texture_info.to_image_info();
-        let texture = factory.create_texture(texture_info).unwrap();
-        factory.update_texture(&texture, &image_info, &pixels,
-                               Some(gfx::tex::TextureKind::Texture2D)).unwrap();
         Texture {
-            handle: texture
+            handle: tex_handle
         }
     }
 
