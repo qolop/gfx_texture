@@ -10,12 +10,12 @@ use image::{
 /// Represents a texture.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Texture<R> where R: gfx::Resources {
-    handle: gfx::TextureHandle<R>
+    handle: gfx::handle::Texture<R>
 }
 
 impl<R: gfx::Resources> Texture<R> {
     /// Gets a handle to the Gfx texture.
-    pub fn handle(&self) -> gfx::TextureHandle<R> {
+    pub fn handle(&self) -> gfx::handle::Texture<R> {
         self.handle.clone()
     }
 
