@@ -26,12 +26,12 @@ impl<R: gfx::Resources> Texture<R> {
         use gfx::traits::*;
 
         let tex_handle = try!(factory.create_texture_rgba8(1, 1));
-        let ref image_info = tex_handle.get_info().to_image_info();
+        let ref image_info = tex_handle.get_info().clone().into();
         try!(factory.update_texture(
             &tex_handle,
-            image_info,
+            &image_info,
             &[0u8; 4],
-            Some(gfx::tex::TextureKind::Texture2D)
+            Some(gfx::tex::Kind::D2)
         ));
         Ok(Texture {
             handle: tex_handle
@@ -81,7 +81,7 @@ impl<R: gfx::Resources> Texture<R> {
             height: height as u16,
             depth: 1,
             levels: 1,
-            kind: gfx::tex::TextureKind::Texture2D,
+            kind: gfx::tex::Kind::D2,
             format: if convert_gamma {
                 gfx::tex::Format::SRGB8_A8
             } else { gfx::tex::RGBA8 }
@@ -116,12 +116,12 @@ impl<R: gfx::Resources> Texture<R> {
         }
 
         let tex_handle = factory.create_texture_rgba8(width, height).unwrap();
-        let ref image_info = tex_handle.get_info().to_image_info();
+        let ref image_info = tex_handle.get_info().clone().into();
         factory.update_texture(
             &tex_handle,
-            image_info,
+            &image_info,
             &pixels,
-            Some(gfx::tex::TextureKind::Texture2D)
+            Some(gfx::tex::Kind::D2)
         ).unwrap();
 
         Texture {
@@ -134,9 +134,9 @@ impl<R: gfx::Resources> Texture<R> {
         where F: gfx::Factory<R>
     {
         factory.update_texture(&self.handle,
-            &self.handle.get_info().to_image_info(),
+            &self.handle.get_info().clone().into(),
             &image,
-            Some(gfx::tex::TextureKind::Texture2D)
+            Some(gfx::tex::Kind::D2)
         ).unwrap();
     }
 }
