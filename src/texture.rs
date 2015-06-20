@@ -49,45 +49,43 @@ impl<R: gfx::Resources> Texture<R> {
     {
         let img = try!(image::open(path).map_err(|e| e.to_string()));
 
-        //if settings.force_alpha //TODO
-        let mut img = match img {
+        let img = match img {
             DynamicImage::ImageRgba8(img) => img,
             img => img.to_rgba()
         };
 
-        if settings.flip_vertical {
-            img = image::imageops::flip_vertical(&img);
-        }
-
-        Ok(Texture::from_image(factory, &img,
-                               settings.convert_gamma,
-                               settings.compress,
-                               settings.generate_mipmap))
+        Ok(Texture::from_image(factory, &img, settings))
     }
 
     /// Creates a texture from image.
     pub fn from_image<F>(
         factory: &mut F,
         image: &RgbaImage,
-        convert_gamma: bool,
-        _compress: bool,
-        generate_mipmap: bool
+        settings: &Settings
     ) -> Self
         where F: gfx::Factory<R>
     {
-        let (width, height) = image.dimensions();
+        let mut img_buf;
+        let mut img = image;
+
+        if settings.flip_vertical {
+            img_buf = image::imageops::flip_vertical(image);
+            img = &img_buf;
+        }
+
+        let (width, height) = img.dimensions();
         let tex_info = gfx::tex::TextureInfo {
             width: width as u16,
             height: height as u16,
             depth: 1,
             levels: 1,
             kind: gfx::tex::Kind::D2,
-            format: if convert_gamma {
-                gfx::tex::Format::SRGB8_A8
-            } else { gfx::tex::RGBA8 }
+            format: if settings.convert_gamma {
+                        gfx::tex::Format::SRGB8_A8
+                    } else { gfx::tex::RGBA8 }
         };
-        let tex_handle = factory.create_texture_static(tex_info, &image).unwrap();
-        if generate_mipmap {
+        let tex_handle = factory.create_texture_static(tex_info, &img).unwrap();
+        if settings.generate_mipmap {
             factory.generate_mipmap(&tex_handle);
         }
         Texture {

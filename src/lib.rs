@@ -13,8 +13,6 @@ mod texture;
 
 /// Texture creation parameters.
 pub struct Settings {
-    /// Convert to rgba8.
-    pub force_alpha: bool,
     /// Sometimes you need the other way around.
     pub flip_vertical: bool,
     /// Treat as sRGB space.
@@ -29,7 +27,6 @@ impl Settings {
     /// Create default settings.
     pub fn new() -> Settings {
         Settings {
-            force_alpha: false,
             flip_vertical: false,
             convert_gamma: false,
             compress: false,
