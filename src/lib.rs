@@ -32,17 +32,7 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn empty<F>(factory: &mut F) -> Result<Self, gfx::tex::TextureError>
         where F: gfx::Factory<R>
     {
-        let tex_handle = try!(factory.create_texture_rgba8(1, 1));
-        let ref image_info = tex_handle.get_info().clone().into();
-        try!(factory.update_texture(
-            &tex_handle,
-            &image_info,
-            &[0u8; 4],
-            Some(gfx::tex::Kind::D2)
-        ));
-        Ok(Texture {
-            handle: tex_handle
-        })
+        Rgba8Texture::create(factory, &[0u8; 4], [1, 1], &TextureSettings::new())
     }
 
     /// Creates a texture from path.
@@ -61,7 +51,8 @@ impl<R: gfx::Resources> Texture<R> {
             img => img.to_rgba()
         };
 
-        Ok(Texture::from_image(factory, &img, settings))
+        Texture::from_image(factory, &img, settings).map_err(
+            |e| format!("{:?}", e))
     }
 
     /// Creates a texture from image.
@@ -69,27 +60,11 @@ impl<R: gfx::Resources> Texture<R> {
         factory: &mut F,
         img: &RgbaImage,
         settings: &TextureSettings
-    ) -> Self
+    ) -> Result<Self, gfx::tex::TextureError>
         where F: gfx::Factory<R>
     {
         let (width, height) = img.dimensions();
-        let tex_info = gfx::tex::TextureInfo {
-            width: width as u16,
-            height: height as u16,
-            depth: 1,
-            levels: 1,
-            kind: gfx::tex::Kind::D2,
-            format: if settings.get_convert_gamma() {
-                        gfx::tex::Format::SRGB8_A8
-                    } else { gfx::tex::RGBA8 }
-        };
-        let tex_handle = factory.create_texture_static(tex_info, &img).unwrap();
-        if settings.get_generate_mipmap() {
-            factory.generate_mipmap(&tex_handle);
-        }
-        Texture {
-            handle: tex_handle
-        }
+        Rgba8Texture::create(factory, img, [width, height], settings)
     }
 
     /// Creates texture from memory alpha.
