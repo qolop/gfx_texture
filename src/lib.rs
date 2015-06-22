@@ -140,12 +140,14 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
     where F: gfx::Factory<R>,
           R: gfx::Resources
 {
-    fn from_memory<S: Into<[u32; 2]>>(
+    type Error = gfx::tex::TextureError;
+
+    fn create<S: Into<[u32; 2]>>(
         factory: &mut F,
         memory: &[u8],
         size: S,
         settings: &TextureSettings
-    ) -> TextureResult<Self> {
+    ) -> Result<Self, Self::Error> {
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
         let tex_info = gfx::tex::TextureInfo {
@@ -160,9 +162,7 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
         };
         let tex_handle = match factory.create_texture_static(tex_info, &memory) {
             Ok(x) => x,
-            Err(err) => {
-                return Err(TextureError::FactoryError(format!("{:?}", err)));
-            }
+            Err(err) => { return Err(err); }
         };
         if settings.get_generate_mipmap() {
             factory.generate_mipmap(&tex_handle);
@@ -175,15 +175,12 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
         factory: &mut F,
         memory: &[u8],
         _size: S,
-    ) -> TextureResult<()> {
-        match factory.update_texture(&self.handle,
+    ) -> Result<(), Self::Error> {
+        factory.update_texture(&self.handle,
             &self.handle.get_info().clone().into(),
             &memory,
             Some(gfx::tex::Kind::D2)
-        ) {
-            Ok(()) => Ok(()),
-            Err(err) => Err(TextureError::FactoryError(format!("{:?}", err)))
-        }
+        )
     }
 }
 
