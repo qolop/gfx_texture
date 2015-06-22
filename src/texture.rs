@@ -1,11 +1,13 @@
 use std::path::Path;
-use { gfx, ImageSize, Settings };
 use image::{
     self,
     DynamicImage,
     GenericImage,
     RgbaImage,
 };
+use gfx::traits::*;
+use { gfx, ImageSize, TextureSettings, TextureResult, TextureError,
+    Rgba8Texture };
 
 /// Represents a texture.
 #[derive(Clone, Debug, PartialEq)]
@@ -23,8 +25,6 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn empty<F>(factory: &mut F) -> Result<Self, gfx::tex::TextureError>
         where F: gfx::Factory<R>
     {
-        use gfx::traits::*;
-
         let tex_handle = try!(factory.create_texture_rgba8(1, 1));
         let ref image_info = tex_handle.get_info().clone().into();
         try!(factory.update_texture(
@@ -42,7 +42,7 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn from_path<F, P>(
         factory: &mut F,
         path: P,
-        settings: &Settings,
+        settings: &TextureSettings,
     ) -> Result<Self, String>
         where F: gfx::Factory<R>,
               P: AsRef<Path>
@@ -60,19 +60,11 @@ impl<R: gfx::Resources> Texture<R> {
     /// Creates a texture from image.
     pub fn from_image<F>(
         factory: &mut F,
-        image: &RgbaImage,
-        settings: &Settings
+        img: &RgbaImage,
+        settings: &TextureSettings
     ) -> Self
         where F: gfx::Factory<R>
     {
-        let mut img_buf;
-        let mut img = image;
-
-        if settings.flip_vertical {
-            img_buf = image::imageops::flip_vertical(image);
-            img = &img_buf;
-        }
-
         let (width, height) = img.dimensions();
         let tex_info = gfx::tex::TextureInfo {
             width: width as u16,
@@ -80,12 +72,12 @@ impl<R: gfx::Resources> Texture<R> {
             depth: 1,
             levels: 1,
             kind: gfx::tex::Kind::D2,
-            format: if settings.convert_gamma {
+            format: if settings.get_convert_gamma() {
                         gfx::tex::Format::SRGB8_A8
                     } else { gfx::tex::RGBA8 }
         };
         let tex_handle = factory.create_texture_static(tex_info, &img).unwrap();
-        if settings.generate_mipmap {
+        if settings.get_generate_mipmap() {
             factory.generate_mipmap(&tex_handle);
         }
         Texture {
@@ -102,8 +94,6 @@ impl<R: gfx::Resources> Texture<R> {
     ) -> Self
         where F: gfx::Factory<R>
     {
-        use gfx::traits::*;
-
         let width = if width == 0 { 1 } else { width as u16 };
         let height = if height == 0 { 1 } else { height as u16 };
 
@@ -136,6 +126,57 @@ impl<R: gfx::Resources> Texture<R> {
             &image,
             Some(gfx::tex::Kind::D2)
         ).unwrap();
+    }
+}
+
+impl<F, R> Rgba8Texture<F> for Texture<R>
+    where F: gfx::Factory<R>,
+          R: gfx::Resources
+{
+    fn from_memory<S: Into<[u32; 2]>>(
+        factory: &mut F,
+        memory: &[u8],
+        size: S,
+        settings: &TextureSettings
+    ) -> TextureResult<Self> {
+        let size = size.into();
+        let (width, height) = (size[0] as u16, size[1] as u16);
+        let tex_info = gfx::tex::TextureInfo {
+            width: width,
+            height: height,
+            depth: 1,
+            levels: 1,
+            kind: gfx::tex::Kind::D2,
+            format: if settings.get_convert_gamma() {
+                        gfx::tex::Format::SRGB8_A8
+                    } else { gfx::tex::RGBA8 }
+        };
+        let tex_handle = match factory.create_texture_static(tex_info, &memory) {
+            Ok(x) => x,
+            Err(err) => {
+                return Err(TextureError::FactoryError(format!("{:?}", err)));
+            }
+        };
+        if settings.get_generate_mipmap() {
+            factory.generate_mipmap(&tex_handle);
+        }
+        Ok(Texture { handle: tex_handle })
+    }
+
+    fn update<S: Into<[u32; 2]>>(
+        &mut self,
+        factory: &mut F,
+        memory: &[u8],
+        _size: S,
+    ) -> TextureResult<()> {
+        match factory.update_texture(&self.handle,
+            &self.handle.get_info().clone().into(),
+            &memory,
+            Some(gfx::tex::Kind::D2)
+        ) {
+            Ok(()) => Ok(()),
+            Err(err) => Err(TextureError::FactoryError(format!("{:?}", err)))
+        }
     }
 }
 
