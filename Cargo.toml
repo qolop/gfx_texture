@@ -30,4 +30,4 @@ path = "src/lib.rs"
 [dependencies]
 gfx = "0.6.1"
 image = "0.3.11"
-piston-texture = "0.2.0"
+piston-texture = "0.1.0"
