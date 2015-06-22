@@ -16,6 +16,15 @@ use image::{
 };
 use gfx::traits::*;
 
+/// Flip settings.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Flip {
+    /// Does not flip.
+    None,
+    /// Flips image vertically.
+    Vertical,
+}
+
 /// Represents a texture.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Texture<R> where R: gfx::Resources {
@@ -39,6 +48,7 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn from_path<F, P>(
         factory: &mut F,
         path: P,
+        flip: Flip,
         settings: &TextureSettings,
     ) -> Result<Self, String>
         where F: gfx::Factory<R>,
@@ -49,6 +59,12 @@ impl<R: gfx::Resources> Texture<R> {
         let img = match img {
             DynamicImage::ImageRgba8(img) => img,
             img => img.to_rgba()
+        };
+
+        let img = if flip == Flip::Vertical {
+            image::imageops::flip_vertical(&img)
+        } else {
+            img
         };
 
         Texture::from_image(factory, &img, settings).map_err(
