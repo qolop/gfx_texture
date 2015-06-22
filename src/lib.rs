@@ -73,41 +73,26 @@ impl<R: gfx::Resources> Texture<R> {
         buffer: &[u8],
         width: u32,
         height: u32,
-    ) -> Self
+        settings: &TextureSettings
+    ) -> Result<Self, gfx::tex::TextureError>
         where F: gfx::Factory<R>
     {
-        let width = if width == 0 { 1 } else { width as u16 };
-        let height = if height == 0 { 1 } else { height as u16 };
-
-        let mut pixels = vec![];
-        for alpha in buffer {
-            pixels.extend(vec![255; 3]);
-            pixels.push(*alpha);
+        if width == 0 || height == 0 {
+            return Texture::empty(factory);
         }
 
-        let tex_handle = factory.create_texture_rgba8(width, height).unwrap();
-        let ref image_info = tex_handle.get_info().clone().into();
-        factory.update_texture(
-            &tex_handle,
-            &image_info,
-            &pixels,
-            Some(gfx::tex::Kind::D2)
-        ).unwrap();
-
-        Texture {
-            handle: tex_handle
-        }
+        let size = [width, height];
+        let buffer = texture::ops::alpha_to_rgba8(buffer, size);
+        Rgba8Texture::create(factory, &buffer, size, settings)
     }
 
     /// Updates the texture with an image.
-    pub fn update<F>(&mut self, factory: &mut F, image: &RgbaImage)
+    pub fn update<F>(&mut self, factory: &mut F, img: &RgbaImage)
+    -> Result<(), gfx::tex::TextureError>
         where F: gfx::Factory<R>
     {
-        factory.update_texture(&self.handle,
-            &self.handle.get_info().clone().into(),
-            &image,
-            Some(gfx::tex::Kind::D2)
-        ).unwrap();
+        let (width, height) = img.dimensions();
+        Rgba8Texture::update(self, factory, img, [width, height])
     }
 }
 
