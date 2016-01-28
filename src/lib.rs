@@ -15,6 +15,8 @@ use image::{
     RgbaImage,
 };
 use gfx::traits::*;
+use gfx::core::factory::CombinedError;
+use gfx::format::{Rgba8, R8_G8_B8_A8};
 
 /// Flip settings.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -26,19 +28,16 @@ pub enum Flip {
 }
 
 /// Represents a texture.
-#[derive(Clone, Debug, PartialEq)]
 pub struct Texture<R> where R: gfx::Resources {
-    handle: gfx::handle::Texture<R>
+    /// Pixel storage for texture.
+    pub surface: gfx::handle::Texture<R, R8_G8_B8_A8>,
+    /// View used by shader.
+    pub view: gfx::handle::ShaderResourceView<R, [f32; 4]>
 }
 
 impl<R: gfx::Resources> Texture<R> {
-    /// Gets a handle to the Gfx texture.
-    pub fn handle(&self) -> gfx::handle::Texture<R> {
-        self.handle.clone()
-    }
-
     /// Returns empty texture.
-    pub fn empty<F>(factory: &mut F) -> Result<Self, gfx::tex::TextureError>
+    pub fn empty<F>(factory: &mut F) -> Result<Self, CombinedError>
         where F: gfx::Factory<R>
     {
         Rgba8Texture::create(factory, &[0u8; 4], [1, 1], &TextureSettings::new())
@@ -76,7 +75,7 @@ impl<R: gfx::Resources> Texture<R> {
         factory: &mut F,
         img: &RgbaImage,
         settings: &TextureSettings
-    ) -> Result<Self, gfx::tex::TextureError>
+    ) -> Result<Self, CombinedError>
         where F: gfx::Factory<R>
     {
         let (width, height) = img.dimensions();
@@ -90,7 +89,7 @@ impl<R: gfx::Resources> Texture<R> {
         width: u32,
         height: u32,
         settings: &TextureSettings
-    ) -> Result<Self, gfx::tex::TextureError>
+    ) -> Result<Self, CombinedError>
         where F: gfx::Factory<R>
     {
         if width == 0 || height == 0 {
@@ -104,7 +103,7 @@ impl<R: gfx::Resources> Texture<R> {
 
     /// Updates the texture with an image.
     pub fn update<F>(&mut self, factory: &mut F, img: &RgbaImage)
-    -> Result<(), gfx::tex::TextureError>
+    -> Result<(), CombinedError>
         where F: gfx::Factory<R>
     {
         let (width, height) = img.dimensions();
@@ -116,7 +115,7 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
     where F: gfx::Factory<R>,
           R: gfx::Resources
 {
-    type Error = gfx::tex::TextureError;
+    type Error = CombinedError;
 
     fn create<S: Into<[u32; 2]>>(
         factory: &mut F,
@@ -126,24 +125,13 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
     ) -> Result<Self, Self::Error> {
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
-        let tex_info = gfx::tex::TextureInfo {
-            width: width,
-            height: height,
-            depth: 1,
-            levels: 1,
-            kind: gfx::tex::Kind::D2,
-            format: if settings.get_convert_gamma() {
-                        gfx::tex::Format::SRGB8_A8
-                    } else { gfx::tex::RGBA8 }
-        };
-        let tex_handle = match factory.create_texture_static(tex_info, &memory) {
-            Ok(x) => x,
-            Err(err) => { return Err(err); }
-        };
-        if settings.get_generate_mipmap() {
-            factory.generate_mipmap(&tex_handle);
-        }
-        Ok(Texture { handle: tex_handle })
+        let tex_info = gfx::tex::Kind::D2(width, height,
+            gfx::tex::AaMode::Single);
+
+        let (surface, view) = try!(factory.create_texture_const::<Rgba8>(
+            tex_info, gfx::cast_slice(memory),
+            settings.get_generate_mipmap()));
+        Ok(Texture { surface: surface, view: view })
     }
 
     fn update<S: Into<[u32; 2]>>(
@@ -152,18 +140,20 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
         memory: &[u8],
         _size: S,
     ) -> Result<(), Self::Error> {
-        factory.update_texture(&self.handle,
-            &self.handle.get_info().clone().into(),
-            &memory,
-            Some(gfx::tex::Kind::D2)
-        )
+        factory.update_texture::<Rgba8>(&self.surface,
+            &self.surface.get_info().to_image_info(0),
+            gfx::cast_slice(memory),
+            None
+        ).map_err(|err| err.into())
     }
 }
 
 impl<R> ImageSize for Texture<R> where R: gfx::Resources {
     #[inline(always)]
     fn get_size(&self) -> (u32, u32) {
-        let info = self.handle.get_info();
-        (info.width as u32, info.height as u32)
+        match self.surface.get_info().kind {
+            gfx::tex::Kind::D2(w, h, _) => (w as u32, h as u32),
+            _ => panic!("Expected two dimensional texture")
+        }
     }
 }
