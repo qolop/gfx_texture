@@ -151,9 +151,7 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
 impl<R> ImageSize for Texture<R> where R: gfx::Resources {
     #[inline(always)]
     fn get_size(&self) -> (u32, u32) {
-        match self.surface.get_info().kind {
-            gfx::tex::Kind::D2(w, h, _) => (w as u32, h as u32),
-            _ => panic!("Expected two dimensional texture")
-        }
+        let (w, h, _, _) = self.surface.get_info().kind.get_dimensions();
+        (w as u32, h as u32)
     }
 }
