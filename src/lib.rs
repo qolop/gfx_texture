@@ -125,11 +125,11 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
     ) -> Result<Self, Self::Error> {
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
-        let tex_info = gfx::tex::Kind::D2(width, height,
+        let tex_kind = gfx::tex::Kind::D2(width, height,
             gfx::tex::AaMode::Single);
 
         let (surface, view) = try!(factory.create_texture_const::<Rgba8>(
-            tex_info, gfx::cast_slice(memory),
+            tex_kind, gfx::cast_slice(memory),
             settings.get_generate_mipmap()));
         Ok(Texture { surface: surface, view: view })
     }
