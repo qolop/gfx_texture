@@ -16,7 +16,7 @@ use image::{
 };
 use gfx::traits::*;
 use gfx::core::factory::CombinedError;
-use gfx::format::{Rgba8, R8_G8_B8_A8};
+use gfx::format::{Srgba8, R8_G8_B8_A8};
 
 /// Flip settings.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -128,7 +128,7 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
         let tex_kind = gfx::tex::Kind::D2(width, height,
             gfx::tex::AaMode::Single);
 
-        let (surface, view) = try!(factory.create_texture_const::<Rgba8>(
+        let (surface, view) = try!(factory.create_texture_const::<Srgba8>(
             tex_kind, gfx::cast_slice(memory),
             settings.get_generate_mipmap()));
         Ok(Texture { surface: surface, view: view })
@@ -140,7 +140,7 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
         memory: &[u8],
         _size: S,
     ) -> Result<(), Self::Error> {
-        factory.update_texture::<Rgba8>(&self.surface,
+        factory.update_texture::<Srgba8>(&self.surface,
             &self.surface.get_info().to_image_info(0),
             gfx::cast_slice(memory),
             None
