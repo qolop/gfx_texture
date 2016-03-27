@@ -40,7 +40,8 @@ impl<R: gfx::Resources> Texture<R> {
     pub fn empty<F>(factory: &mut F) -> Result<Self, CombinedError>
         where F: gfx::Factory<R>
     {
-        Rgba8Texture::create(factory, &[0u8; 4], [1, 1], &TextureSettings::new())
+        CreateTexture::create(factory, Format::Rgba8, &[0u8; 4], [1, 1],
+                              &TextureSettings::new())
     }
 
     /// Creates a texture from path.
@@ -79,7 +80,8 @@ impl<R: gfx::Resources> Texture<R> {
         where F: gfx::Factory<R>
     {
         let (width, height) = img.dimensions();
-        Rgba8Texture::create(factory, img, [width, height], settings)
+        CreateTexture::create(factory, Format::Rgba8,
+                              img, [width, height], settings)
     }
 
     /// Creates texture from memory alpha.
@@ -98,20 +100,24 @@ impl<R: gfx::Resources> Texture<R> {
 
         let size = [width, height];
         let buffer = texture::ops::alpha_to_rgba8(buffer, size);
-        Rgba8Texture::create(factory, &buffer, size, settings)
+        CreateTexture::create(factory, Format::Rgba8, &buffer, size, settings)
     }
 
     /// Updates the texture with an image.
-    pub fn update<F>(&mut self, factory: &mut F, img: &RgbaImage)
-    -> Result<(), CombinedError>
-        where F: gfx::Factory<R>
+    pub fn update<C>(
+        &mut self,
+        encoder: &mut gfx::Encoder<R, C>,
+        img: &RgbaImage
+    ) -> Result<(), gfx::UpdateError<[u16; 3]>>
+        where C: gfx::CommandBuffer<R>
     {
         let (width, height) = img.dimensions();
-        Rgba8Texture::update(self, factory, img, [width, height])
+        UpdateTexture::update(self, encoder, Format::Rgba8,
+                              img, [width, height])
     }
 }
 
-impl<F, R> Rgba8Texture<F> for Texture<R>
+impl<F, R> CreateTexture<F> for Texture<R>
     where F: gfx::Factory<R>,
           R: gfx::Resources
 {
@@ -119,31 +125,40 @@ impl<F, R> Rgba8Texture<F> for Texture<R>
 
     fn create<S: Into<[u32; 2]>>(
         factory: &mut F,
+        _format: Format,
         memory: &[u8],
         size: S,
-        settings: &TextureSettings
+        _settings: &TextureSettings
     ) -> Result<Self, Self::Error> {
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
         let tex_kind = gfx::tex::Kind::D2(width, height,
             gfx::tex::AaMode::Single);
 
-        let (surface, view) = try!(factory.create_texture_const::<Srgba8>(
-            tex_kind, gfx::cast_slice(memory),
-            settings.get_generate_mipmap()));
+        let (surface, view) = try!(factory.create_texture_const_u8::<Srgba8>(
+            tex_kind, &[memory]));
         Ok(Texture { surface: surface, view: view })
     }
+}
+
+impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
+    where R: gfx::Resources,
+          C: gfx::CommandBuffer<R>
+{
+    type Error = gfx::UpdateError<[u16; 3]>;
 
     fn update<S: Into<[u32; 2]>>(
         &mut self,
-        factory: &mut F,
+        encoder: &mut gfx::Encoder<R, C>,
+        _format: Format,
         memory: &[u8],
         _size: S,
     ) -> Result<(), Self::Error> {
-        factory.update_texture::<Srgba8>(&self.surface,
-            &self.surface.get_info().to_image_info(0),
+        encoder.update_texture::<_, Srgba8>(
+            &self.surface,
+            None,
+            self.surface.get_info().to_image_info(0),
             gfx::cast_slice(memory),
-            None
         ).map_err(|err| err.into())
     }
 }
