@@ -15,7 +15,7 @@ use image::{
     RgbaImage,
 };
 use gfx::traits::*;
-use gfx::core::factory::CombinedError;
+use gfx::CombinedError;
 use gfx::format::{Srgba8, R8_G8_B8_A8};
 
 /// Flip settings.
