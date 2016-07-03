@@ -11,10 +11,8 @@ pub use texture::*;
 use std::path::Path;
 use image::{
     DynamicImage,
-    GenericImage,
     RgbaImage,
 };
-use gfx::traits::*;
 use gfx::CombinedError;
 use gfx::format::{Srgba8, R8_G8_B8_A8};
 
