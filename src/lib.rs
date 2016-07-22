@@ -110,8 +110,9 @@ impl<R: gfx::Resources> Texture<R> {
         where C: gfx::CommandBuffer<R>
     {
         let (width, height) = img.dimensions();
-        UpdateTexture::update(self, encoder, Format::Rgba8,
-                              img, [width, height])
+        let offset = [0, 0];
+        let size = [width, height];
+        UpdateTexture::update(self, encoder, Format::Rgba8, img, offset, size)
     }
 }
 
@@ -145,23 +146,24 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
 {
     type Error = gfx::UpdateError<[u16; 3]>;
 
-    fn update<S: Into<[u32; 2]>>(
+    fn update<O, S>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
         format: Format,
         memory: &[u8],
+        offset: O,
         size: S,
-    ) -> Result<(), Self::Error> {
-
-        // TODO: This should be passed via the args.
-        let offset = [0, 0];
-
+    ) -> Result<(), Self::Error>
+        where O: Into<[u32; 2]>,
+              S: Into<[u32; 2]>,
+    {
+        let offset = offset.into();
         let size = size.into();
         let tex = &self.surface;
         let face = None;
         let img_info = gfx::tex::ImageInfoCommon {
-            xoffset: offset[0],
-            yoffset: offset[1],
+            xoffset: offset[0] as u16,
+            yoffset: offset[1] as u16,
             zoffset: 0,
             width: size[0] as u16,
             height: size[1] as u16,
