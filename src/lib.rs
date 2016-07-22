@@ -148,7 +148,7 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
     fn update<S: Into<[u32; 2]>>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
-        _format: Format,
+        format: Format,
         memory: &[u8],
         size: S,
     ) -> Result<(), Self::Error> {
@@ -171,7 +171,12 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
         };
         let data = gfx::cast_slice(memory);
 
-        encoder.update_texture::<_, Srgba8>(tex, face, img_info, data).map_err(Into::into)
+        match format {
+            Format::Rgba8 => {
+                use gfx::format::Rgba8;
+                encoder.update_texture::<_, Rgba8>(tex, face, img_info, data).map_err(Into::into)
+            },
+        }
     }
 }
 
