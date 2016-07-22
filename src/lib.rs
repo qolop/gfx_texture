@@ -150,14 +150,28 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
         encoder: &mut gfx::Encoder<R, C>,
         _format: Format,
         memory: &[u8],
-        _size: S,
+        size: S,
     ) -> Result<(), Self::Error> {
-        encoder.update_texture::<_, Srgba8>(
-            &self.surface,
-            None,
-            self.surface.get_info().to_image_info(0),
-            gfx::cast_slice(memory),
-        ).map_err(|err| err.into())
+
+        // TODO: This should be passed via the args.
+        let offset = [0, 0];
+
+        let size = size.into();
+        let tex = &self.surface;
+        let face = None;
+        let img_info = gfx::tex::ImageInfoCommon {
+            xoffset: offset[0],
+            yoffset: offset[1],
+            zoffset: 0,
+            width: size[0] as u16,
+            height: size[1] as u16,
+            depth: 0,
+            format: (),
+            mipmap: 0,
+        };
+        let data = gfx::cast_slice(memory);
+
+        encoder.update_texture::<_, Srgba8>(tex, face, img_info, data).map_err(Into::into)
     }
 }
 
