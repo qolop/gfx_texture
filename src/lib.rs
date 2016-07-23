@@ -110,8 +110,9 @@ impl<R: gfx::Resources> Texture<R> {
         where C: gfx::CommandBuffer<R>
     {
         let (width, height) = img.dimensions();
-        UpdateTexture::update(self, encoder, Format::Rgba8,
-                              img, [width, height])
+        let offset = [0, 0];
+        let size = [width, height];
+        UpdateTexture::update(self, encoder, Format::Rgba8, img, offset, size)
     }
 }
 
@@ -145,19 +146,39 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
 {
     type Error = gfx::UpdateError<[u16; 3]>;
 
-    fn update<S: Into<[u32; 2]>>(
+    fn update<O, S>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
-        _format: Format,
+        format: Format,
         memory: &[u8],
-        _size: S,
-    ) -> Result<(), Self::Error> {
-        encoder.update_texture::<_, Srgba8>(
-            &self.surface,
-            None,
-            self.surface.get_info().to_image_info(0),
-            gfx::cast_slice(memory),
-        ).map_err(|err| err.into())
+        offset: O,
+        size: S,
+    ) -> Result<(), Self::Error>
+        where O: Into<[u32; 2]>,
+              S: Into<[u32; 2]>,
+    {
+        let offset = offset.into();
+        let size = size.into();
+        let tex = &self.surface;
+        let face = None;
+        let img_info = gfx::tex::ImageInfoCommon {
+            xoffset: offset[0] as u16,
+            yoffset: offset[1] as u16,
+            zoffset: 0,
+            width: size[0] as u16,
+            height: size[1] as u16,
+            depth: 0,
+            format: (),
+            mipmap: 0,
+        };
+        let data = gfx::cast_slice(memory);
+
+        match format {
+            Format::Rgba8 => {
+                use gfx::format::Rgba8;
+                encoder.update_texture::<_, Rgba8>(tex, face, img_info, data).map_err(Into::into)
+            },
+        }
     }
 }
 
