@@ -29,6 +29,8 @@ pub enum Flip {
 pub struct Texture<R> where R: gfx::Resources {
     /// Pixel storage for texture.
     pub surface: gfx::handle::Texture<R, R8_G8_B8_A8>,
+    /// Sampler for texture.
+    pub sampler: gfx::handle::Sampler<R>,
     /// View used by shader.
     pub view: gfx::handle::ShaderResourceView<R, [f32; 4]>
 }
@@ -127,16 +129,27 @@ impl<F, R> CreateTexture<F> for Texture<R>
         _format: Format,
         memory: &[u8],
         size: S,
-        _settings: &TextureSettings
+        settings: &TextureSettings
     ) -> Result<Self, Self::Error> {
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
         let tex_kind = gfx::tex::Kind::D2(width, height,
             gfx::tex::AaMode::Single);
 
+        // FIXME Use get_min too. gfx has only one filter setting for both.
+        let filter_method = match settings.get_mag() {
+            texture::Filter::Nearest => gfx::tex::FilterMethod::Scale,
+            texture::Filter::Linear => gfx::tex::FilterMethod::Bilinear,
+        };
+        let sampler_info = gfx::tex::SamplerInfo::new(
+            filter_method,
+            gfx::tex::WrapMode::Clamp
+        );
+
         let (surface, view) = try!(factory.create_texture_const_u8::<Srgba8>(
             tex_kind, &[memory]));
-        Ok(Texture { surface: surface, view: view })
+        let sampler = factory.create_sampler(sampler_info);
+        Ok(Texture { surface: surface, sampler: sampler, view: view })
     }
 }
 
