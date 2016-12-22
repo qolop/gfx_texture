@@ -133,20 +133,20 @@ impl<F, R> CreateTexture<F> for Texture<R>
     ) -> Result<Self, Self::Error> {
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
-        let tex_kind = gfx::tex::Kind::D2(width, height,
-            gfx::tex::AaMode::Single);
+        let tex_kind = gfx::texture::Kind::D2(width, height,
+            gfx::texture::AaMode::Single);
 
         // FIXME Use get_min too. gfx has only one filter setting for both.
         let filter_method = match settings.get_mag() {
-            texture::Filter::Nearest => gfx::tex::FilterMethod::Scale,
-            texture::Filter::Linear => gfx::tex::FilterMethod::Bilinear,
+            texture::Filter::Nearest => gfx::texture::FilterMethod::Scale,
+            texture::Filter::Linear => gfx::texture::FilterMethod::Bilinear,
         };
-        let sampler_info = gfx::tex::SamplerInfo::new(
+        let sampler_info = gfx::texture::SamplerInfo::new(
             filter_method,
-            gfx::tex::WrapMode::Clamp
+            gfx::texture::WrapMode::Clamp
         );
 
-        let (surface, view) = try!(factory.create_texture_const_u8::<Srgba8>(
+        let (surface, view) = try!(factory.create_texture_immutable_u8::<Srgba8>(
             tex_kind, &[memory]));
         let sampler = factory.create_sampler(sampler_info);
         Ok(Texture { surface: surface, sampler: sampler, view: view })
@@ -174,7 +174,7 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
         let size = size.into();
         let tex = &self.surface;
         let face = None;
-        let img_info = gfx::tex::ImageInfoCommon {
+        let img_info = gfx::texture::ImageInfoCommon {
             xoffset: offset[0] as u16,
             yoffset: offset[1] as u16,
             zoffset: 0,
@@ -184,7 +184,7 @@ impl<R, C> UpdateTexture<gfx::Encoder<R, C>> for Texture<R>
             format: (),
             mipmap: 0,
         };
-        let data = gfx::cast_slice(memory);
+        let data = gfx::memory::cast_slice(memory);
 
         match format {
             Format::Rgba8 => {
