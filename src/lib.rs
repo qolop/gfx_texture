@@ -3,6 +3,7 @@
 //! A Gfx texture representation that works nicely with Piston libraries.
 
 extern crate gfx;
+extern crate gfx_core;
 extern crate texture;
 extern crate image;
 
@@ -131,6 +132,43 @@ impl<F, R> CreateTexture<F> for Texture<R>
         size: S,
         settings: &TextureSettings
     ) -> Result<Self, Self::Error> {
+        // Modified `Factory::create_texture_immutable_u8` for dynamic texture.
+        fn create_texture<T, F, R>(
+            factory: &mut F,
+            kind: gfx::texture::Kind,
+            data: &[&[u8]]
+        ) -> Result<(
+            gfx::handle::Texture<R, T::Surface>,
+            gfx::handle::ShaderResourceView<R, T::View>
+        ), CombinedError>
+            where F: gfx::Factory<R>,
+                  R: gfx::Resources,
+                  T: gfx::format::TextureFormat
+        {
+            use gfx::{format, texture};
+            use gfx::memory::{Usage, SHADER_RESOURCE};
+            use gfx_core::memory::Typed;
+
+            let surface = <T::Surface as format::SurfaceTyped>::get_surface_type();
+            let num_slices = kind.get_num_slices().unwrap_or(1) as usize;
+            let num_faces = if kind.is_cube() {6} else {1};
+            let desc = texture::Info {
+                kind: kind,
+                levels: (data.len() / (num_slices * num_faces)) as texture::Level,
+                format: surface,
+                bind: SHADER_RESOURCE,
+                usage: Usage::Dynamic,
+            };
+            let cty = <T::Channel as format::ChannelTyped>::get_channel_type();
+            let raw = try!(factory.create_texture_raw(desc, Some(cty), Some(data)));
+            let levels = (0, raw.get_info().levels - 1);
+            let tex = Typed::new(raw);
+            let view = try!(factory.view_texture_as_shader_resource::<T>(
+                &tex, levels, format::Swizzle::new()
+            ));
+            Ok((tex, view))
+        }
+
         let size = size.into();
         let (width, height) = (size[0] as u16, size[1] as u16);
         let tex_kind = gfx::texture::Kind::D2(width, height,
@@ -146,8 +184,9 @@ impl<F, R> CreateTexture<F> for Texture<R>
             gfx::texture::WrapMode::Clamp
         );
 
-        let (surface, view) = try!(factory.create_texture_immutable_u8::<Srgba8>(
-            tex_kind, &[memory]));
+        let (surface, view) = try!(create_texture::<Srgba8, F, R>(
+            factory, tex_kind, &[memory])
+        );
         let sampler = factory.create_sampler(sampler_info);
         Ok(Texture { surface: surface, sampler: sampler, view: view })
     }
